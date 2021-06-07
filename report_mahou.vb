@@ -14,37 +14,6 @@ Function has_cleanup_run() As Boolean
     has_cleanup_run = find_in_cells(Range("A1"), check_string)
 End Function
 
-Sub main()
-    Dim answer As Integer
-    answer = MsgBox("Start Bid Due Date Report Setup?", vbOKCancel)
-    If has_cleanup_run() Then
-        MsgBox "Setup already run. Cannot run again.", vbCritical
-    ElseIf answer = vbOK Then
-        'Begin running daily report setup
-        Call first_clean
-        Call second_clean
-        Call big_sort
-        Call sheet_edits
-        Call hl_oppo_dupes
-        Call hl_created_yday
-        Call gray_out_claimed
-        Call x_completed
-        Call add_a_day
-        Call thicctim
-        Call ending
-        'Return to top
-        Range("A1").Select
-        'Confirm completion
-        MsgBox "Setup complete."
-        'Reject
-        hasRun = True
-    ElseIf answer = vbCancel Then
-        Exit Sub
-    Else
-        Exit Sub
-    End If
-End Sub
-
 Sub first_clean()
     'Remove the first 14 rows
     Rows("1:14").EntireRow.Delete
@@ -222,4 +191,35 @@ End Sub
 
 Sub thicctim()
     find_splits "B", 1
+End Sub
+
+Sub main()
+    Dim answer As Integer
+    answer = MsgBox("Start Bid Due Date Report Setup?", vbOKCancel)
+    If has_cleanup_run() Then
+        MsgBox "Setup already run. Cannot run again.", vbCritical
+    ElseIf answer = vbOK Then
+        'Begin running daily report setup
+        Call first_clean
+        Call second_clean
+        Call big_sort
+        Call sheet_edits
+        Call hl_oppo_dupes
+        Call hl_created_yday
+        Call gray_out_claimed
+        Call x_completed
+        Call add_a_day
+        Call thicctim
+        Call ending
+        'Return to top
+        Range("A1").Select
+        'Confirm completion
+        MsgBox "Setup complete."
+        'Reject
+        hasRun = True
+    ElseIf answer = vbCancel Then
+        Exit Sub
+    Else
+        Exit Sub
+    End If
 End Sub
