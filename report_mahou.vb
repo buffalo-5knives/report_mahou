@@ -1,6 +1,6 @@
 Dim hasRun As Boolean
 
-Sub master_task()
+Sub main()
     Dim answer As Integer
     answer = MsgBox("Start Bid Due Date Report Setup?", vbOKCancel)
     If hasRun = True Then
