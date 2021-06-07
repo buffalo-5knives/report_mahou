@@ -194,32 +194,29 @@ Sub thicctim()
 End Sub
 
 Sub main()
-    Dim answer As Integer
-    answer = MsgBox("Start Bid Due Date Report Setup?", vbOKCancel)
+    'Sanity check
     If has_cleanup_run() Then
         MsgBox "Setup already run. Cannot run again.", vbCritical
-    ElseIf answer = vbOK Then
+        Exit Sub
+    End If
+    Dim answer As Integer
+    answer = MsgBox("Start Bid Due Date Report Setup?", vbOKCancel)
+    If answer = vbOK Then
         'Begin running daily report setup
-        Call first_clean
-        Call second_clean
-        Call big_sort
-        Call sheet_edits
-        Call hl_oppo_dupes
-        Call hl_created_yday
-        Call gray_out_claimed
-        Call x_completed
-        Call add_a_day
-        Call thicctim
-        Call ending
+        first_clean
+        second_clean
+        big_sort
+        sheet_edits
+        hl_oppo_dupes
+        hl_created_yday
+        gray_out_claimed
+        x_completed
+        add_a_day
+        thicctim
+        ending
         'Return to top
         Range("A1").Select
         'Confirm completion
         MsgBox "Setup complete."
-        'Reject
-        hasRun = True
-    ElseIf answer = vbCancel Then
-        Exit Sub
-    Else
-        Exit Sub
     End If
 End Sub
