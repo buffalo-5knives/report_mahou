@@ -11,7 +11,7 @@ End Function
 Function has_cleanup_run() As Boolean
     Dim check_string As String
     check_string = "Bid Due Date Report"
-    has_cleanup_run = find_in_cells(Range("A1"), check_string)
+    has_cleanup_run = Not find_in_cells(Range("A1"), check_string)
 End Function
 
 Sub first_clean()
