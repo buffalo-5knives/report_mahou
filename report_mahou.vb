@@ -175,25 +175,28 @@ Sub gray_out_claimed()
 End Sub
 
 Sub find_splits(dateCol As String, colTop As Long)
-    Dim cur As Range, last As Range, splitrange As Range, splitstart As Range, splitend As Range
+    Dim cur As Range, last As Range, splitrange As Range
     Dim lastsplit As Integer
     lastsplit = 2
     ActiveSheet.UsedRange 'Refresh the used range
     For i = (colTop + 2) To Cells(Rows.Count, dateCol).End(xlUp).Row
         Set cur = Cells(i, dateCol)
         Set last = Cells(i - 1, dateCol)
-        Set splitstart = Cells(lastsplit, "E")
-        Set splitend = Cells(i - 1, "E")
         If cur.Value <> last.Value Then
-            With ActiveSheet.UsedRange.Rows(i - 1).Borders(xlBottom)
-                .LineStyle = xlContinuous
-                .Weight = xlThick
-            End With
-            Set splitrange = Range(splitstart.Address, splitend.Address)
+            thicken_split_border i
+            Set splitrange = Range(Cells(lastsplit, "E").Address, _
+                                   Cells(i - 1, "E").Address)
             job_counter splitrange, lastsplit
             lastsplit = i
         End If
     Next
+End Sub
+
+Sub thicken_split_border(i As Integer)
+    With ActiveSheet.UsedRange.Rows(i - 1).Borders(xlBottom)
+        .LineStyle = xlContinuous
+        .Weight = xlThick
+    End With
 End Sub
 
 Sub job_counter(splitrange As Range, lastsplit As Integer)
