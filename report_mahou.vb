@@ -15,13 +15,13 @@ Sub master_task()
         Call hl_created_yday
         Call gray_out_claimed
         Call x_completed
-		Call add_a_day
+        Call add_a_day
         Call thicctim
-		Call ending
+        Call ending
         'Return to top
-            Range("A1").Select
+        Range("A1").Select
         'Confirm completion
-            MsgBox "Setup complete."
+        MsgBox "Setup complete."
         'Reject
         hasRun = True
     ElseIf answer = vbCancel Then
@@ -52,23 +52,29 @@ Sub big_sort()
     Set BD = Intersect(workspace, Range("B2", Range("B2").End(xlDown)))
     Set ST = Intersect(workspace, Range("K2", Range("K2").End(xlDown)))
     Set CD = Intersect(workspace, Range("A2", Range("A2").End(xlDown)))
-        ActiveSheet.Sort.SortFields.Clear
-        ActiveSheet.Sort.SortFields.Add2 _
-            Key:=BD, SortOn:=xlSortOnValues, Order:=xlAscending, _
-            DataOption:=xlSortNormal
-        ActiveSheet.Sort.SortFields.Add2 _
-            Key:=ST, SortOn:=xlSortOnValues, Order:=xlAscending, _
-            CustomOrder:="Active Prospect,Qualified,Identified,Quoted", DataOption:= _
-            xlSortNormal
-        ActiveSheet.Sort.SortFields.Add2 _
-            Key:=CD, SortOn:=xlSortOnValues, Order:=xlAscending, _
-            DataOption:=xlSortNormal
-        With ActiveSheet.Sort
-            .SetRange workspace
-            .Header = xlYes
-            .Orientation = xlTopToBottom
-            .Apply
-        End With
+    ActiveSheet.Sort.SortFields.Clear
+    ActiveSheet.Sort.SortFields.Add2 _
+        Key:=BD, _
+        SortOn:=xlSortOnValues, _
+        Order:=xlAscending, _
+        DataOption:=xlSortNormal
+    ActiveSheet.Sort.SortFields.Add2 _
+        Key:=ST, _
+        SortOn:=xlSortOnValues, _
+        Order:=xlAscending, _
+        CustomOrder:="Active Prospect,Qualified,Identified,Quoted", _
+        DataOption:= xlSortNormal
+    ActiveSheet.Sort.SortFields.Add2 _
+        Key:=CD, _
+        SortOn:=xlSortOnValues, _
+        Order:=xlAscending, _
+        DataOption:=xlSortNormal
+    With ActiveSheet.Sort
+        .SetRange workspace
+        .Header = xlYes
+        .Orientation = xlTopToBottom
+        .Apply
+    End With
 End Sub
 
 Sub ending()
@@ -104,16 +110,16 @@ Sub sheet_edits()
     Columns("F:F").ColumnWidth = 70.71
     Columns(lastCol).Select
     ActiveCell.Offset(0, 1).Value = "Notes"
-        With Range("L1")
-            .Font.Bold = True
-            .Interior.Color = RGB(170, 170, 255)
-        End With
+    With Range("L1")
+        .Font.Bold = True
+        .Interior.Color = RGB(170, 170, 255)
+    End With
     Columns("L:L").ColumnWidth = 63.57
     ActiveCell.Offset(0, 2).Value = "Count"
-        With Range("M1")
-            .Font.Bold = True
-            .Interior.Color = RGB(170, 170, 255)
-        End With
+    With Range("M1")
+        .Font.Bold = True
+        .Interior.Color = RGB(170, 170, 255)
+    End With
     With ActiveWindow
         .SplitColumn = 0
         .SplitRow = 1
@@ -125,10 +131,10 @@ End Sub
 Sub hl_dupes(col As Range)
     'Highlight Duplicate Values
     With col.FormatConditions.AddUniqueValues
-    .DupeUnique = xlDuplicate
+        .DupeUnique = xlDuplicate
         With .Font
-        .Bold = True
-        .Italic = True
+            .Bold = True
+            .Italic = True
         End With
     End With
 End Sub
@@ -155,12 +161,12 @@ Sub gray_out(col As Range)
     'Gray out when LS ID...
     Dim team As String
     team = "=OR(E1=""CJ"",E1=""AT"",E1=""EC"")"
-        With Range("D:D").FormatConditions.Add(xlExpression, Formula1:=team)
-            With .Font
-                .ThemeColor = xlThemeColorDark1
-                .TintAndShade = -0.499984740745262
-            End With
+    With Range("D:D").FormatConditions.Add(xlExpression, Formula1:=team)
+        With .Font
+            .ThemeColor = xlThemeColorDark1
+            .TintAndShade = -0.499984740745262
         End With
+    End With
 End Sub
 
 Sub gray_out_claimed()
@@ -192,9 +198,9 @@ End Sub
 
 Sub job_counter(splitrange As Range, lastsplit As Integer)
     Cells(lastsplit, "K").Value = "=COUNTIF(" & splitrange.Address & "," & " ""-"")"
-        With Cells(lastsplit, "K")
-            .Style = "Calculation"
-        End With
+    With Cells(lastsplit, "K")
+        .Style = "Calculation"
+    End With
 End Sub
 
 Sub thicctim()
