@@ -1,35 +1,18 @@
-Dim hasRun As Boolean
+Function find_in_cells(search_range As Range, pattern As String) As Boolean
+    For Each cel In search_range
+        If InStr(1, cel.Value, pattern) > 0 Then
+            find_in_cells = True
+            Exit Function
+        End If
+    Next cel
+    find_in_cells = False
+End Function
 
-Sub master_task()
-    Dim answer As Integer
-    answer = MsgBox("Start Bid Due Date Report Setup?", vbOKCancel)
-    If hasRun = True Then
-        MsgBox "Setup already run. Cannot run again.", vbCritical
-    ElseIf answer = vbOK Then
-        'Begin running daily report setup
-        Call first_clean
-        Call second_clean
-        Call big_sort
-        Call sheet_edits
-        Call hl_oppo_dupes
-        Call hl_created_yday
-        Call gray_out_claimed
-        Call x_completed
-		Call add_a_day
-        Call thicctim
-		Call ending
-        'Return to top
-            Range("A1").Select
-        'Confirm completion
-            MsgBox "Setup complete."
-        'Reject
-        hasRun = True
-    ElseIf answer = vbCancel Then
-        Exit Sub
-    Else
-        Exit Sub
-    End If
-End Sub
+Function has_cleanup_run() As Boolean
+    Dim check_string As String
+    check_string = "Bid Due Date Report"
+    has_cleanup_run = find_in_cells(Range("A1"), check_string)
+End Function
 
 Sub first_clean()
     'Remove the first 14 rows
@@ -52,23 +35,29 @@ Sub big_sort()
     Set BD = Intersect(workspace, Range("B2", Range("B2").End(xlDown)))
     Set ST = Intersect(workspace, Range("K2", Range("K2").End(xlDown)))
     Set CD = Intersect(workspace, Range("A2", Range("A2").End(xlDown)))
-        ActiveSheet.Sort.SortFields.Clear
-        ActiveSheet.Sort.SortFields.Add2 _
-            Key:=BD, SortOn:=xlSortOnValues, Order:=xlAscending, _
-            DataOption:=xlSortNormal
-        ActiveSheet.Sort.SortFields.Add2 _
-            Key:=ST, SortOn:=xlSortOnValues, Order:=xlAscending, _
-            CustomOrder:="Active Prospect,Qualified,Identified,Quoted", DataOption:= _
-            xlSortNormal
-        ActiveSheet.Sort.SortFields.Add2 _
-            Key:=CD, SortOn:=xlSortOnValues, Order:=xlAscending, _
-            DataOption:=xlSortNormal
-        With ActiveSheet.Sort
-            .SetRange workspace
-            .Header = xlYes
-            .Orientation = xlTopToBottom
-            .Apply
-        End With
+    ActiveSheet.Sort.SortFields.Clear
+    ActiveSheet.Sort.SortFields.Add2 _
+        Key:=BD, _
+        SortOn:=xlSortOnValues, _
+        Order:=xlAscending, _
+        DataOption:=xlSortNormal
+    ActiveSheet.Sort.SortFields.Add2 _
+        Key:=ST, _
+        SortOn:=xlSortOnValues, _
+        Order:=xlAscending, _
+        CustomOrder:="Active Prospect,Qualified,Identified,Quoted", _
+        DataOption:= xlSortNormal
+    ActiveSheet.Sort.SortFields.Add2 _
+        Key:=CD, _
+        SortOn:=xlSortOnValues, _
+        Order:=xlAscending, _
+        DataOption:=xlSortNormal
+    With ActiveSheet.Sort
+        .SetRange workspace
+        .Header = xlYes
+        .Orientation = xlTopToBottom
+        .Apply
+    End With
 End Sub
 
 Sub ending()
@@ -104,16 +93,16 @@ Sub sheet_edits()
     Columns("F:F").ColumnWidth = 70.71
     Columns(lastCol).Select
     ActiveCell.Offset(0, 1).Value = "Notes"
-        With Range("L1")
-            .Font.Bold = True
-            .Interior.Color = RGB(170, 170, 255)
-        End With
+    With Range("L1")
+        .Font.Bold = True
+        .Interior.Color = RGB(170, 170, 255)
+    End With
     Columns("L:L").ColumnWidth = 63.57
     ActiveCell.Offset(0, 2).Value = "Count"
-        With Range("M1")
-            .Font.Bold = True
-            .Interior.Color = RGB(170, 170, 255)
-        End With
+    With Range("M1")
+        .Font.Bold = True
+        .Interior.Color = RGB(170, 170, 255)
+    End With
     With ActiveWindow
         .SplitColumn = 0
         .SplitRow = 1
@@ -125,10 +114,10 @@ End Sub
 Sub hl_dupes(col As Range)
     'Highlight Duplicate Values
     With col.FormatConditions.AddUniqueValues
-    .DupeUnique = xlDuplicate
+        .DupeUnique = xlDuplicate
         With .Font
-        .Bold = True
-        .Italic = True
+            .Bold = True
+            .Italic = True
         End With
     End With
 End Sub
@@ -155,12 +144,12 @@ Sub gray_out(col As Range)
     'Gray out when LS ID...
     Dim team As String
     team = "=OR(E1=""CJ"",E1=""AT"",E1=""EC"")"
-        With Range("D:D").FormatConditions.Add(xlExpression, Formula1:=team)
-            With .Font
-                .ThemeColor = xlThemeColorDark1
-                .TintAndShade = -0.499984740745262
-            End With
+    With Range("D:D").FormatConditions.Add(xlExpression, Formula1:=team)
+        With .Font
+            .ThemeColor = xlThemeColorDark1
+            .TintAndShade = -0.499984740745262
         End With
+    End With
 End Sub
 
 Sub gray_out_claimed()
@@ -169,35 +158,65 @@ Sub gray_out_claimed()
 End Sub
 
 Sub find_splits(dateCol As String, colTop As Long)
-    Dim cur As Range, last As Range, splitrange As Range, splitstart As Range, splitend As Range
+    Dim cur As Range, last As Range, splitrange As Range
     Dim lastsplit As Integer
     lastsplit = 2
     ActiveSheet.UsedRange 'Refresh the used range
     For i = (colTop + 2) To Cells(Rows.Count, dateCol).End(xlUp).Row
         Set cur = Cells(i, dateCol)
         Set last = Cells(i - 1, dateCol)
-        Set splitstart = Cells(lastsplit, "E")
-        Set splitend = Cells(i - 1, "E")
         If cur.Value <> last.Value Then
-            With ActiveSheet.UsedRange.Rows(i - 1).Borders(xlBottom)
-                .LineStyle = xlContinuous
-                .Weight = xlThick
-            End With
-            Set splitrange = Range(splitstart.Address, splitend.Address)
+            thicken_split_border i
+            Set splitrange = Range(Cells(lastsplit, "E").Address, _
+                                   Cells(i - 1, "E").Address)
             job_counter splitrange, lastsplit
             lastsplit = i
         End If
     Next
 End Sub
 
+Sub thicken_split_border(i As Integer)
+    With ActiveSheet.UsedRange.Rows(i - 1).Borders(xlBottom)
+        .LineStyle = xlContinuous
+        .Weight = xlThick
+    End With
+End Sub
+
 Sub job_counter(splitrange As Range, lastsplit As Integer)
     Cells(lastsplit, "K").Value = "=COUNTIF(" & splitrange.Address & "," & " ""-"")"
-        With Cells(lastsplit, "K")
-            .Style = "Calculation"
-        End With
+    With Cells(lastsplit, "K")
+        .Style = "Calculation"
+    End With
 End Sub
 
 Sub thicctim()
     find_splits "B", 1
 End Sub
 
+Sub main()
+    'Sanity check
+    If has_cleanup_run() Then
+        MsgBox "Setup already run. Cannot run again.", vbCritical
+        Exit Sub
+    End If
+    Dim answer As Integer
+    answer = MsgBox("Start Bid Due Date Report Setup?", vbOKCancel)
+    If answer = vbOK Then
+        'Begin running daily report setup
+        first_clean
+        second_clean
+        big_sort
+        sheet_edits
+        hl_oppo_dupes
+        hl_created_yday
+        gray_out_claimed
+        x_completed
+        add_a_day
+        thicctim
+        ending
+        'Return to top
+        Range("A1").Select
+        'Confirm completion
+        MsgBox "Setup complete."
+    End If
+End Sub
