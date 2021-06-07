@@ -46,7 +46,7 @@ Sub big_sort()
         SortOn:=xlSortOnValues, _
         Order:=xlAscending, _
         CustomOrder:="Active Prospect,Qualified,Identified,Quoted", _
-        DataOption:= xlSortNormal
+        DataOption:=xlSortNormal
     ActiveSheet.Sort.SortFields.Add2 _
         Key:=CD, _
         SortOn:=xlSortOnValues, _
@@ -175,7 +175,7 @@ Sub find_splits(dateCol As String, colTop As Long)
     Next
 End Sub
 
-Sub thicken_split_border(i As Integer)
+Sub thicken_split_border(ByVal i As Long)
     With ActiveSheet.UsedRange.Rows(i - 1).Borders(xlBottom)
         .LineStyle = xlContinuous
         .Weight = xlThick
