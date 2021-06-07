@@ -1,9 +1,23 @@
-Dim hasRun As Boolean
+Function find_in_cells(search_range As Range, pattern As String) As Boolean
+    For Each cel In search_range
+        If InStr(1, cel.Value, pattern) > 0 Then
+            find_in_cells = True
+            Exit Function
+        End If
+    Next cel
+    find_in_cells = False
+End Function
+
+Function has_cleanup_run() As Boolean
+    Dim check_string As String
+    check_string = "Bid Due Date Report"
+    has_cleanup_run = find_in_cells(Range("A1"), check_string)
+End Function
 
 Sub main()
     Dim answer As Integer
     answer = MsgBox("Start Bid Due Date Report Setup?", vbOKCancel)
-    If hasRun = True Then
+    If has_cleanup_run() Then
         MsgBox "Setup already run. Cannot run again.", vbCritical
     ElseIf answer = vbOK Then
         'Begin running daily report setup
@@ -209,4 +223,3 @@ End Sub
 Sub thicctim()
     find_splits "B", 1
 End Sub
-
