@@ -81,10 +81,6 @@ Sub x_completed()
     Selection.EntireRow.Delete
 End Sub
 
-Sub add_a_day()
-    Range("B1").End(xlDown).Offset(1, 0).Value = ((Range("B1").End(xlDown)) + 1)
-End Sub
-
 Sub sheet_edits()
     Dim lastCol As Long
     lastCol = Cells(1, Columns.Count).End(xlToLeft).Column
@@ -173,6 +169,10 @@ Sub find_splits(dateCol As String, colTop As Long)
             lastsplit = i
         End If
     Next
+    thicken_split_border i
+    Set splitrange = Range(Cells(lastsplit, "E").Address, _
+                           Cells(i, "E").Address)
+    job_counter splitrange, lastsplit
 End Sub
 
 Sub thicken_split_border(ByVal i As Long)
@@ -211,7 +211,6 @@ Sub main()
         hl_created_yday
         gray_out_claimed
         x_completed
-        add_a_day
         thicctim
         ending
         'Return to top
