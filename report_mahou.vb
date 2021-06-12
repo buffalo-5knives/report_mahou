@@ -1,11 +1,19 @@
-Function find_in_cells(search_range As Range, pattern As String) As Boolean
+Function find_cell_in_cells(search_range As Range, pattern As String) As Range
     For Each cel In search_range
         If InStr(1, cel.Value, pattern) > 0 Then
-            find_in_cells = True
+            Set find_cell_in_cells = cel
             Exit Function
         End If
     Next cel
-    find_in_cells = False
+    Set find_cell_in_cells = Nothing
+End Function
+
+Function find_in_cells(search_range As Range, pattern As String) As Boolean
+    If find_cell_in_cells(search_range, pattern) Is Nothing Then
+        find_in_cells = False
+    Else
+        find_in_cells = True
+    End If
 End Function
 
 Function has_cleanup_run() As Boolean
