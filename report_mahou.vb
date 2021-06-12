@@ -76,7 +76,6 @@ Sub x_completed()
     Range("D2").Select
     Range(Selection, Selection.End(xlDown)).Select
     Selection.Find(what:="-").Activate
-    ActiveWindow.SmallScroll Down:=-18
     Selection.ColumnDifferences(ActiveCell).Select
     Selection.EntireRow.Delete
 End Sub
@@ -213,9 +212,9 @@ Sub main()
         x_completed
         thicctim
         ending
-        'Return to top
-        Range("A1").Select
         'Confirm completion
         MsgBox "Setup complete."
+        'Return to top
+        ActiveWindow.ScrollRow = 1
     End If
 End Sub
