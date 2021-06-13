@@ -147,7 +147,9 @@ End Sub
 
 Sub hl_oppo_dupes()
     'Run hl_dupes on Opportunity Name
-    hl_dupes Range("F:F")
+    If dict.Exists("Opportunity Name") Then
+        hl_dupes ActiveSheet.UsedRange.Columns(dict.Item("Opportunity Name").Column)
+    End If
 End Sub
 
 Sub hl_yday(col As Range)
@@ -231,6 +233,7 @@ Sub main()
     If answer = vbOK Then
         'Begin running daily report setup
         first_clean
+        collect_column_coords
         second_clean
         big_sort
         sheet_edits
