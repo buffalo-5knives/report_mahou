@@ -1,6 +1,26 @@
+Dim dict As Object
+
+Function collect_column_coords() As Object
+    Set dict = CreateObject("Scripting.Dictionary")
+    Dim col_names_arr As Variant
+    col_names_arr = Array( _
+                    "Opportunity Name", _
+                    "Bid Date")
+    Dim row1 As Range
+    Set row1 = ActiveSheet.Range(Cells(1, 1), Cells(1, Columns.Count).End(xlToLeft))
+    Dim tmp_cel As Range
+    For Each col_name In col_names_arr
+        Set tmp_cel = find_cell_in_cells(row1, CStr(col_name))
+        If Not tmp_cel Is Nothing Then
+            dict.Add CStr(col_name), tmp_cel
+        End If
+    Next
+    Set collect_column_coords = dict
+End Function
+
 Function find_cell_in_cells(search_range As Range, pattern As String) As Range
     For Each cel In search_range
-        If InStr(1, cel.Value, pattern) > 0 Then
+        If InStr(1, CStr(cel.Value), pattern) > 0 Then
             Set find_cell_in_cells = cel
             Exit Function
         End If
@@ -62,7 +82,7 @@ Sub big_sort()
         DataOption:=xlSortNormal
     With ActiveSheet.Sort
         .SetRange workspace
-        .Header = xlYes
+        .header = xlYes
         .Orientation = xlTopToBottom
         .Apply
     End With
@@ -106,11 +126,11 @@ Sub sheet_edits()
         .Font.Bold = True
         .Interior.Color = RGB(170, 170, 255)
     End With
-    With ActiveWindow
-        .SplitColumn = 0
-        .SplitRow = 1
-        ActiveWindow.FreezePanes = True
-    End With
+    'With ActiveWindow
+    '    .SplitColumn = 0
+    '    .SplitRow = 1
+    '    ActiveWindow.FreezePanes = True
+    'End With
     Columns("I:J").EntireColumn.Delete
 End Sub
 
