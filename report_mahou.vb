@@ -237,6 +237,17 @@ Sub thicctim()
     find_splits get_col("Bid Date").Column, 1
 End Sub
 
+Sub work_count()
+    Dim lsID_str As String
+    lsID_str = Split(Cells(1, get_col("LS ID").Column).Address, "$")(1)
+    get_col("Stage").Rows(1).Offset(0, 4).Value = "AT"
+    get_col("Stage").Rows(1).Offset(0, 5).Value = "EC"
+    get_col("Stage").Rows(1).Offset(0, 6).Value = "CJ"
+    get_col("Stage").Rows(2).Offset(0, 4).Value = "=COUNTIF(" & lsID_str & ":" & lsID_str & "," & " ""AT"")"
+    get_col("Stage").Rows(2).Offset(0, 5).Value = "=COUNTIF(" & lsID_str & ":" & lsID_str & "," & " ""EC"")"
+    get_col("Stage").Rows(2).Offset(0, 6).Value = "=COUNTIF(" & lsID_str & ":" & lsID_str & "," & " ""CJ"")"
+End Sub
+
 Sub main()
     Dim answer As Integer
     answer = MsgBox("Start Bid Due Date Report Setup?", vbOKCancel)
@@ -252,6 +263,7 @@ Sub main()
         gray_out_claimed
         x_completed
         thicctim
+        work_count
         'Confirm completion
         MsgBox "Setup complete."
         'Return to top
