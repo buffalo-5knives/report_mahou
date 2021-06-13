@@ -5,12 +5,14 @@ Function collect_column_coords() As Object
     Dim col_names_arr As Variant
     col_names_arr = Array( _
                     "Opportunity Name", _
-                    "Bid Date")
-    Dim row1 As Range
-    Set row1 = ActiveSheet.Range(Cells(1, 1), Cells(1, Columns.Count).End(xlToLeft))
+                    "Bid Date", _
+                    "EC ID", _
+                    "Stage", _
+                    "Created Date", _
+                    "LS ID")
     Dim tmp_cel As Range
     For Each col_name In col_names_arr
-        Set tmp_cel = find_cell_in_cells(row1, CStr(col_name))
+        Set tmp_cel = find_cell_in_cells(get_row(1), CStr(col_name))
         If Not tmp_cel Is Nothing Then
             dict.Add CStr(col_name), tmp_cel
         End If
@@ -44,17 +46,19 @@ End Function
 
 Sub first_clean()
     'Remove the first 14 rows
-    Rows("1:14").EntireRow.Delete
+    If Not has_cleanup_run() Then Rows("1:14").EntireRow.Delete
 End Sub
 
 Sub second_clean()
     'Remove everything past the last opportunity row
-    Dim bottomRow As Long
-    bottomRow = Cells(Rows.Count, "A").End(xlUp).Row
-    ActiveSheet.UsedRange.Rows(bottomRow).Select
-    Selection.Offset(-4, 0).Select
-    Selection.Resize(5, 1).Select
-    Selection.EntireRow.Delete
+    Dim bottomCell As Range
+    Set bottomCell = Cells(Rows.Count, "A").End(xlUp)
+    If find_in_cells(bottomCell, "Copyright") Then
+        ActiveSheet.UsedRange.Rows(bottomCell.Row).Select
+        Selection.Offset(-4, 0).Select
+        Selection.Resize(5, 1).Select
+        Selection.EntireRow.Delete
+    End If
 End Sub
 
 Sub big_sort()
@@ -88,103 +92,112 @@ Sub big_sort()
     End With
 End Sub
 
-Sub ending()
-    bottomRow = Cells(Rows.Count, "A").End(xlUp).Row
-    ActiveSheet.UsedRange.Rows(bottomRow).Offset(1, 0).Select
-    Selection.Merge
-    Selection.HorizontalAlignment = xlCenter
-    Selection.Value = "END OF REPORT"
-    Selection.Interior.Color = RGB(170, 170, 204)
-End Sub
-
 Sub x_completed()
-    Dim prev As String
-    prev = Range("B1").End(xlDown)
     'Delete rows where EC ID <> "-"
-    Range("D2").Select
-    Range(Selection, Selection.End(xlDown)).Select
-    Selection.Find(what:="-").Activate
-    Selection.ColumnDifferences(ActiveCell).Select
-    Selection.EntireRow.Delete
+    If MsgBox("Have Opportunites completed before today already been removed?", vbYesNo) = vbNo Then
+        get_col("EC ID").Select
+        Range(Selection, Selection.End(xlDown)).Select
+        Selection.Find(what:="-").Activate
+        Selection.ColumnDifferences(ActiveCell).Select
+        Selection.EntireRow.Delete
+    End If
 End Sub
 
 Sub sheet_edits()
     Dim lastCol As Long
-    lastCol = Cells(1, Columns.Count).End(xlToLeft).Column
+    lastCol = dict.Item("Stage").Column
     'Remove Quote Date and Amount columns, unwrap sheet, add Notes, resize
     Cells.WrapText = False
-    Columns("F:F").ColumnWidth = 70.71
+    Dim col As Long
+    col = dict.Item("Opportunity Name").Column
+    With Columns(col)
+        .ColumnWidth = 52
+    End With
     Columns(lastCol).Select
-    ActiveCell.Offset(0, 1).Value = "Notes"
-    With Range("L1")
+    With ActiveCell.Offset(0, 1)
+        .Value = "Notes"
+        .Font.Bold = True
+        .Interior.Color = RGB(170, 170, 255)
+        With Columns(.Column)
+            .ColumnWidth = 63.57
+        End With
+    End With
+    With ActiveCell.Offset(0, 2)
+        .Value = "Count"
         .Font.Bold = True
         .Interior.Color = RGB(170, 170, 255)
     End With
-    Columns("L:L").ColumnWidth = 63.57
-    ActiveCell.Offset(0, 2).Value = "Count"
-    With Range("M1")
-        .Font.Bold = True
-        .Interior.Color = RGB(170, 170, 255)
+    With ActiveWindow
+        If Not .FreezePanes Then
+            .SplitColumn = 0
+            .SplitRow = 1
+            .FreezePanes = True
+        End If
     End With
-    'With ActiveWindow
-    '    .SplitColumn = 0
-    '    .SplitRow = 1
-    '    ActiveWindow.FreezePanes = True
-    'End With
-    Columns("I:J").EntireColumn.Delete
 End Sub
 
 Sub hl_dupes(col As Range)
     'Highlight Duplicate Values
-    With col.FormatConditions.AddUniqueValues
-        .DupeUnique = xlDuplicate
-        With .Font
-            .Bold = True
-            .Italic = True
-        End With
+    With col.FormatConditions
+        If .Count < 1 Then
+            With .AddUniqueValues
+                .DupeUnique = xlDuplicate
+                With .Font
+                    .Bold = True
+                    .Italic = True
+                End With
+            End With
+        End If
     End With
 End Sub
 
 Sub hl_oppo_dupes()
     'Run hl_dupes on Opportunity Name
-    If dict.Exists("Opportunity Name") Then
-        hl_dupes ActiveSheet.UsedRange.Columns(dict.Item("Opportunity Name").Column)
-    End If
+    If dict.Exists("Opportunity Name") Then hl_dupes get_col("Opportunity Name")
 End Sub
 
 Sub hl_yday(col As Range)
     'Highlight Yesterdays
-    With col.FormatConditions.Add(xlTimePeriod, DateOperator:=xlYesterday)
-        .Font.Color = -16383844
-        .Interior.Color = 13551615
+    With col.FormatConditions
+        If .Count < 1 Then
+            With .Add(xlTimePeriod, DateOperator:=xlYesterday)
+                .Font.Color = -16383844
+                .Interior.Color = 13551615
+            End With
+        End If
     End With
 End Sub
 
 Sub hl_created_yday()
     'Run hl_yday on Created Date
-    hl_yday Range("A:A")
+    If dict.Exists("Created Date") Then hl_yday get_col("Created Date")
 End Sub
 
 Sub gray_out(col As Range)
     'Gray out when LS ID...
     Dim team As String
     team = "=OR(E1=""CJ"",E1=""AT"",E1=""EC"")"
-    With Range("D:D").FormatConditions.Add(xlExpression, Formula1:=team)
-        With .Font
-            .ThemeColor = xlThemeColorDark1
-            .TintAndShade = -0.499984740745262
-        End With
+    With col.FormatConditions
+        If .Count < 1 Then
+            With .Add(xlExpression, Formula1:=team)
+                With .Font
+                    .ThemeColor = xlThemeColorDark1
+                    .TintAndShade = -0.499984740745262
+                End With
+            End With
+        End If
     End With
 End Sub
 
 Sub gray_out_claimed()
     'Gray out EC ID when...
-    gray_out Range("D:D")
+    If dict.Exists("EC ID") Then gray_out get_col("EC ID")
 End Sub
 
-Sub find_splits(dateCol As String, colTop As Long)
+Sub find_splits(dateCol As Long, colTop As Long)
     Dim cur As Range, last As Range, splitrange As Range
-    Dim lastsplit As Integer
+    Dim lastsplit As Integer, lsID As Long
+    lsID = get_col("LS ID").Column
     lastsplit = 2
     ActiveSheet.UsedRange 'Refresh the used range
     For i = (colTop + 2) To Cells(Rows.Count, dateCol).End(xlUp).Row
@@ -192,15 +205,15 @@ Sub find_splits(dateCol As String, colTop As Long)
         Set last = Cells(i - 1, dateCol)
         If cur.Value <> last.Value Then
             thicken_split_border i
-            Set splitrange = Range(Cells(lastsplit, "E").Address, _
-                                   Cells(i - 1, "E").Address)
+            Set splitrange = Range(Cells(lastsplit, lsID).Address, _
+                                   Cells(i - 1, lsID).Address)
             job_counter splitrange, lastsplit
             lastsplit = i
         End If
     Next
     thicken_split_border i
-    Set splitrange = Range(Cells(lastsplit, "E").Address, _
-                           Cells(i, "E").Address)
+    Set splitrange = Range(Cells(lastsplit, lsID).Address, _
+                           Cells(i, lsID).Address)
     job_counter splitrange, lastsplit
 End Sub
 
@@ -212,22 +225,19 @@ Sub thicken_split_border(ByVal i As Long)
 End Sub
 
 Sub job_counter(splitrange As Range, lastsplit As Integer)
-    Cells(lastsplit, "K").Value = "=COUNTIF(" & splitrange.Address & "," & " ""-"")"
-    With Cells(lastsplit, "K")
+    Dim Cnt As Long
+    Cnt = get_col("Stage").Offset(0, 2).Column
+    Cells(lastsplit, Cnt).Value = "=COUNTIF(" & splitrange.Address & "," & " ""-"")"
+    With Cells(lastsplit, Cnt)
         .Style = "Calculation"
     End With
 End Sub
 
 Sub thicctim()
-    find_splits "B", 1
+    find_splits get_col("Bid Date").Column, 1
 End Sub
 
 Sub main()
-    'Sanity check
-    If has_cleanup_run() Then
-        MsgBox "Setup already run. Cannot run again.", vbCritical
-        Exit Sub
-    End If
     Dim answer As Integer
     answer = MsgBox("Start Bid Due Date Report Setup?", vbOKCancel)
     If answer = vbOK Then
@@ -242,7 +252,6 @@ Sub main()
         gray_out_claimed
         x_completed
         thicctim
-        ending
         'Confirm completion
         MsgBox "Setup complete."
         'Return to top
