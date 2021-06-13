@@ -249,3 +249,19 @@ Sub main()
         ActiveWindow.ScrollRow = 1
     End If
 End Sub
+
+Function get_row(row_num As Long) As Range
+    Set get_row = ActiveSheet.Range( _
+        Cells(row_num, 1), _
+        Cells(row_num, Columns.Count).End(xlToLeft) _
+    )
+End Function
+
+Function get_col(header As String) As Range
+    With dict.Item(header)
+        Set get_col = ActiveSheet.Range( _
+            Cells(2, .Column), _
+            Cells(Rows.Count, .Column).End(xlUp) _
+        )
+    End With
+End Function
