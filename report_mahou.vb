@@ -94,7 +94,8 @@ End Sub
 
 Sub x_completed()
     'Delete rows where EC ID <> "-"
-    If MsgBox("Have Opportunites completed before today already been removed?", vbYesNo) = vbNo Then
+    If MsgBox("Have the rows for Opportunites completed before generating today's report already been deleted?" & vbNewLine & _
+    vbNewLine & "Answering ""No"" deletes rows with an EC ID value that is not a dash.", vbYesNo) = vbNo Then
         get_col("EC ID").Select
         Range(Selection, Selection.End(xlDown)).Select
         Selection.Find(what:="-").Activate
@@ -119,7 +120,7 @@ Sub sheet_edits()
         .Font.Bold = True
         .Interior.Color = RGB(170, 170, 255)
         With Columns(.Column)
-            .ColumnWidth = 63.57
+            .ColumnWidth = 60
         End With
     End With
     With ActiveCell.Offset(0, 2)
