@@ -1,5 +1,9 @@
 Dim dict As Object
 
+'Const peers As String = "OR(E2=""CJ"",E2=""AT"",E2=""EC"")"
+'Const claimed As String = "AND(D1=""complete"")"
+'Const prefix As String = "="
+
 Function collect_column_coords() As Object
     Set dict = CreateObject("Scripting.Dictionary")
     Dim col_names_arr As Variant
@@ -9,7 +13,8 @@ Function collect_column_coords() As Object
                     "EC ID", _
                     "Stage", _
                     "Created Date", _
-                    "LS ID")
+                    "LS ID", _
+                    "Notes")
     Dim tmp_cel As Range
     For Each col_name In col_names_arr
         Set tmp_cel = find_cell_in_cells(get_row(1), CStr(col_name))
@@ -38,16 +43,23 @@ Function find_in_cells(search_range As Range, pattern As String) As Boolean
     End If
 End Function
 
-Function has_cleanup_run() As Boolean
-    Dim check_string As String
-    check_string = "Bid Due Date Report"
-    has_cleanup_run = Not find_in_cells(Range("A1"), check_string)
+Function get_row(row_num As Long) As Range
+    Set get_row = ActiveSheet.Range( _
+        Cells(row_num, 1), _
+        Cells(row_num, Columns.Count).End(xlToLeft) _
+    )
 End Function
 
 Sub first_clean()
     'Remove the first 14 rows
     If Not has_cleanup_run() Then Rows("1:14").EntireRow.Delete
 End Sub
+
+Function has_cleanup_run() As Boolean
+    Dim check_string As String
+    check_string = "Bid Due Date Report"
+    has_cleanup_run = Not find_in_cells(Range("A1"), check_string)
+End Function
 
 Sub second_clean()
     'Remove everything past the last opportunity row
@@ -92,18 +104,6 @@ Sub big_sort()
     End With
 End Sub
 
-Sub x_completed()
-    'Delete rows where EC ID <> "-"
-    If MsgBox("Have the rows for Opportunites completed before generating today's report already been deleted?" & vbNewLine & _
-    vbNewLine & "Answering ""No"" deletes rows with an EC ID value that is not a dash.", vbYesNo) = vbNo Then
-        get_col("EC ID").Select
-        Range(Selection, Selection.End(xlDown)).Select
-        Selection.Find(what:="-").Activate
-        Selection.ColumnDifferences(ActiveCell).Select
-        Selection.EntireRow.Delete
-    End If
-End Sub
-
 Sub sheet_edits()
     Dim lastCol As Long
     lastCol = dict.Item("Stage").Column
@@ -137,10 +137,15 @@ Sub sheet_edits()
     End With
 End Sub
 
+Sub hl_oppo_dupes()
+    'Run hl_dupes on Opportunity Name
+    If dict.Exists("Opportunity Name") Then hl_dupes get_col("Opportunity Name")
+End Sub
+
 Sub hl_dupes(col As Range)
     'Highlight Duplicate Values
     With col.FormatConditions
-        If .Count < 1 Then
+        If .Count < 7 Then
             With .AddUniqueValues
                 .DupeUnique = xlDuplicate
                 With .Font
@@ -152,9 +157,9 @@ Sub hl_dupes(col As Range)
     End With
 End Sub
 
-Sub hl_oppo_dupes()
-    'Run hl_dupes on Opportunity Name
-    If dict.Exists("Opportunity Name") Then hl_dupes get_col("Opportunity Name")
+Sub hl_created_yday()
+    'Run hl_yday on Created Date
+    If dict.Exists("Created Date") Then hl_yday get_col("Created Date")
 End Sub
 
 Sub hl_yday(col As Range)
@@ -169,17 +174,35 @@ Sub hl_yday(col As Range)
     End With
 End Sub
 
-Sub hl_created_yday()
-    'Run hl_yday on Created Date
-    If dict.Exists("Created Date") Then hl_yday get_col("Created Date")
+Sub is_boss()
+    'Fill Opportunity Name orange when...
+    If dict.Exists("Opportunity Name") Then blue_boss get_col("Opportunity Name")
 End Sub
 
-Sub gray_out(col As Range)
+Sub blue_boss(col As Range)
+    'Fill orange when EC ID is... and LS ID is...
+    Dim team As String
+    team = "=(D2=""CJ"")"
+    With col.FormatConditions
+        If .Count < 7 Then
+            With .Add(xlExpression, Formula1:=team)
+                    .Interior.Color = 15773696
+            End With
+        End If
+    End With
+End Sub
+
+Sub is_active()
+    'Gray out EC ID when...
+    If dict.Exists("EC ID") Then gray_active get_col("EC ID")
+End Sub
+
+Sub gray_active(col As Range)
     'Gray out when LS ID...
     Dim team As String
-    team = "=OR(E1=""CJ"",E1=""AT"",E1=""EC"")"
+    team = "=OR(E2=""CJ"",E2=""AT"",E2=""EC"")"
     With col.FormatConditions
-        If .Count < 1 Then
+        If .Count < 7 Then
             With .Add(xlExpression, Formula1:=team)
                 With .Font
                     .ThemeColor = xlThemeColorDark1
@@ -190,9 +213,89 @@ Sub gray_out(col As Range)
     End With
 End Sub
 
-Sub gray_out_claimed()
-    'Gray out EC ID when...
-    If dict.Exists("EC ID") Then gray_out get_col("EC ID")
+Sub is_closed()
+    'Fill Opportunity Name red when...
+    If dict.Exists("Opportunity Name") Then red_closed get_col("Opportunity Name")
+End Sub
+
+Sub red_closed(col As Range)
+    'Fill red when EC ID is... and LS ID is...
+    Dim team As String
+    team = "=AND(OR(E2=""CJ"",E2=""AT"",E2=""EC""),D2=""closed"")"
+    With col.FormatConditions
+        If .Count < 7 Then
+            With .Add(xlExpression, Formula1:=team)
+                    .Interior.Color = 255
+            End With
+        End If
+    End With
+End Sub
+
+Sub is_complete()
+    'Fill Opportunity Name green when...
+    If dict.Exists("Opportunity Name") Then green_complete get_col("Opportunity Name")
+End Sub
+
+Sub green_complete(col As Range)
+    'Fill green when EC ID is... and LS ID is...
+    Dim team As String
+    team = "=AND(OR(E2=""CJ"",E2=""AT"",E2=""EC""),D2=""complete"")"
+    With col.FormatConditions
+        If .Count < 7 Then
+            With .Add(xlExpression, Formula1:=team)
+                    .Interior.Color = 5287936
+            End With
+        End If
+    End With
+End Sub
+
+Sub is_waiting()
+    'Fill Opportunity Name orange when...
+    If dict.Exists("Opportunity Name") Then orange_waiting get_col("Opportunity Name")
+End Sub
+
+Sub orange_waiting(col As Range)
+    'Fill orange when EC ID is... and LS ID is...
+    Dim team As String
+    team = "=AND(OR(E2=""CJ"",E2=""AT"",E2=""EC""),D2=""waiting"")"
+    With col.FormatConditions
+        If .Count < 7 Then
+            With .Add(xlExpression, Formula1:=team)
+                    .Interior.Color = 49407
+            End With
+        End If
+    End With
+End Sub
+
+Sub is_claimed()
+    'Fill Opportunity Name yellow when...
+    If dict.Exists("Opportunity Name") Then yellow_claimed get_col("Opportunity Name")
+End Sub
+
+Sub yellow_claimed(col As Range)
+    'Fill yellow when EC ID is not... and LS ID is...
+    Dim team As String
+    team = "=OR(E2=""CJ"",E2=""AT"",E2=""EC"")"
+    With col.FormatConditions
+        If .Count < 7 Then
+            With .Add(xlExpression, Formula1:=team)
+                    .Interior.Color = 65535
+            End With
+        End If
+    End With
+End Sub
+
+Function get_col(header As String) As Range
+    With dict.Item(header)
+        Set get_col = ActiveSheet.Range( _
+            Cells(2, .Column), _
+            Cells(Rows.Count, .Column).End(xlUp) _
+        )
+    End With
+End Function
+
+Sub thicctim()
+    find_splits get_col("Bid Date").Column, 1
 End Sub
 
 Sub find_splits(dateCol As Long, colTop As Long)
@@ -234,8 +337,16 @@ Sub job_counter(splitrange As Range, lastsplit As Integer)
     End With
 End Sub
 
-Sub thicctim()
-    find_splits get_col("Bid Date").Column, 1
+Sub x_beendone()
+    'Delete rows where EC ID <> "-"
+    If MsgBox("Have the rows for Opportunites completed before generating today's report already been deleted?" & vbNewLine & _
+    vbNewLine & "Answering ""No"" deletes rows with an EC ID value that is not a dash.", vbYesNo) = vbNo Then
+        get_col("EC ID").Select
+        Range(Selection, Selection.End(xlDown)).Select
+        Selection.Find(what:="-").Activate
+        Selection.ColumnDifferences(ActiveCell).Select
+        Selection.EntireRow.Delete
+    End If
 End Sub
 
 Sub work_count()
@@ -259,10 +370,16 @@ Sub main()
         second_clean
         big_sort
         sheet_edits
+        collect_column_coords
         hl_oppo_dupes
         hl_created_yday
-        gray_out_claimed
-        x_completed
+        is_boss
+        is_active
+        is_closed
+        is_complete
+        is_waiting
+        is_claimed
+        x_beendone
         thicctim
         work_count
         'Confirm completion
@@ -271,19 +388,3 @@ Sub main()
         ActiveWindow.ScrollRow = 1
     End If
 End Sub
-
-Function get_row(row_num As Long) As Range
-    Set get_row = ActiveSheet.Range( _
-        Cells(row_num, 1), _
-        Cells(row_num, Columns.Count).End(xlToLeft) _
-    )
-End Function
-
-Function get_col(header As String) As Range
-    With dict.Item(header)
-        Set get_col = ActiveSheet.Range( _
-            Cells(2, .Column), _
-            Cells(Rows.Count, .Column).End(xlUp) _
-        )
-    End With
-End Function
